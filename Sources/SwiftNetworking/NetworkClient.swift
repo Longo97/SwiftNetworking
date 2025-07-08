@@ -8,14 +8,14 @@
 import Foundation
 
 @available(iOS 13.0.0, *)
-final class NetworkClient<NetworkError: NetworkErrorConvertible>: NetworkClientProtocol {
+public final class NetworkClient<NetworkError: NetworkErrorConvertible>: NetworkClientProtocol {
     private let configuration: NetworkConfiguration
     
     public init(configuration: NetworkConfiguration) {
         self.configuration = configuration
     }
     
-    func send<T>(_ endpoint: Endpoint, as type: T.Type) async throws -> T where T : Decodable {
+    public func send<T>(_ endpoint: Endpoint, as type: T.Type) async throws -> T where T : Decodable {
         let request = try endpoint.asURLRequest(baseURL: configuration.baseURL)
         
         let (data, response) = try await configuration.session.data(for: request)
