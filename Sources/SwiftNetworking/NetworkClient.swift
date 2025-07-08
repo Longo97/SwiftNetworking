@@ -8,7 +8,7 @@
 import Foundation
 
 @available(iOS 13.0.0, *)
-public final class NetworkClient<NetworkError: NetworkErrorConvertible>: NetworkClientProtocol {
+public final class NetworkClient<ErrorType: NetworkErrorConvertible>: NetworkClientProtocol {
     private let configuration: NetworkConfiguration
     
     public init(configuration: NetworkConfiguration) {
@@ -25,9 +25,9 @@ public final class NetworkClient<NetworkError: NetworkErrorConvertible>: Network
         do {
             return try configuration.decoder.decode(T.self, from: data)
         } catch let decodingError as DecodingError {
-            throw NetworkError.fromDecodingError(decodingError)
+            throw ErrorType.fromDecodingError(decodingError)
         } catch {
-            throw NetworkError.unknown
+            throw ErrorType.unknown
         }
     }
 }
