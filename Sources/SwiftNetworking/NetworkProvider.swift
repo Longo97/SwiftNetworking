@@ -8,7 +8,7 @@
 import Foundation
 
 @available(iOS 13.0.0, *)
-public final class NetworkClient<ErrorType: NetworkErrorConvertible>: NetworkClientProtocol {
+public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkClientProtocol {
     private let configuration: NetworkConfiguration
     
     public init(configuration: NetworkConfiguration) {
