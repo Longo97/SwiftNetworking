@@ -24,4 +24,8 @@ jobs:
           swift-version: '5.8'
 
       - name: Run tests
-        run: swift test --enable-code-coverage --parallel
+        run: xcodebuild test \
+    -scheme SwiftNetworking \
+    -destination 'platform=iOS Simulator,name=iPhone 14,OS=17.0' \
+    -enableCodeCoverage YES \
+    -parallel-testing-enabled YES
