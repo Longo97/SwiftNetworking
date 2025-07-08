@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main      
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Swift
+        uses: fwal/setup-swift@v1
+        with:
+          swift-version: '6.0' 
+
+      - name: Run tests
+        run: swift test
+
