@@ -28,7 +28,7 @@ public struct Endpoint {
     
     public func asURLRequest(baseURL: URL) throws -> URLRequest {
         var components: URLComponents? = nil
-        if #available(iOS 16.0, *) {
+        if #available(iOS 16.0, macOS 13.0, *) {
             components = URLComponents(url: baseURL.appending(path: path),
                                            resolvingAgainstBaseURL: false)
         } else {

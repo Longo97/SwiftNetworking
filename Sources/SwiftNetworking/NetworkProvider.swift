@@ -15,10 +15,27 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
         self.configuration = configuration
     }
     
+    @available(macOS 10.15, *)
     public func send<T>(_ endpoint: Endpoint, as type: T.Type) async throws -> T where T : Decodable {
         let request = try endpoint.asURLRequest(baseURL: configuration.baseURL)
+        let (data, response): (Data, URLResponse)
         
-        let (data, response) = try await configuration.session.data(for: request)
+        if #available(macOS 12.0, *) {
+            (data, response) = try await configuration.session.data(for: request)
+        } else {
+            // Fallback on earlier versions
+            (data, response) = try await withCheckedThrowingContinuation { continuation in
+                configuration.session.dataTask(with: request) { data, response, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else if let data = data, let response = response {
+                        continuation.resume(returning: (data, response))
+                    } else {
+                        continuation.resume(throwing: URLError(.badServerResponse))
+                    }
+                }.resume()
+            }
+        }
         try HTTPResponseValidator.validate(response)
         
         LogUtilities.log("RESPONSE: \(String(data: data, encoding: .utf8) ?? "Unable to decode data to string")")
