@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Swift Version](https://img.shields.io/badge/Swift-5.7-blue.svg)](https://swift.org)
-[![Platforms](https://img.shields.io/badge/Platforms-iOS%2014%2B%20|%20macOS%2011%2B-brightgreen.svg)]()
+[![Platforms](https://img.shields.io/badge/Platforms-iOS%2013%2B%20-brightgreen.svg)]()
 [![Release 1.0.0](https://img.shields.io/badge/release-1.0.0-blue.svg)]()
 
 **A lightweight and testable asynchronous REST client built with Swift and `async/await`.**
@@ -38,7 +38,8 @@ let package = Package(
     .target(name: "YourApp", dependencies: ["SwiftNetworkingKit"])
   ]
 )
+```
 
 Or use Xcode:
 File → Add Packages…
-Paste the repo URL: https://github.com/Longo97/SwiftNetworking.git
+ and paste the repo URL: https://github.com/Longo97/SwiftNetworking.git
