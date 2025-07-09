@@ -7,8 +7,8 @@
 
 import Foundation
 
-public enum HTTPResponseValidator {
-    public static func validate(_ response: URLResponse) throws {
+internal enum HTTPResponseValidator {
+    internal static func validate(_ response: URLResponse) throws {
         guard let http = response as? HTTPURLResponse else {
             throw DefaultNetworkError.invalidHTTPResponse
         }

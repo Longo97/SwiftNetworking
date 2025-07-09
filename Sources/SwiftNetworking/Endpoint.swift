@@ -7,13 +7,56 @@
 
 import Foundation
 
+/// Represents a REST API endpoint, encapsulating the URL path, HTTP method,
+/// query parameters, headers, and optional body data.
+///
+/// This struct simplifies the creation of `URLRequest` objects by
+/// constructing the full URL and encoding the request body if provided.
+///
+/// # Properties
+/// - `path`: The URL path component appended to the base URL.
+/// - `method`: The HTTP method to use (e.g., GET, POST). Defaults to `.get`.
+/// - `query`: Optional query parameters as an array of `URLQueryItem`.
+/// - `headers`: Optional HTTP headers as a dictionary `[String: String]`.
+/// - `body`: Optional request body conforming to `Encodable`.
+///
+/// # Usage Example
+/// ```swift
+/// let endpoint = Endpoint(
+///     path: "/teams",
+///     method: .post,
+///     query: [URLQueryItem(name: "season", value: "2024")],
+///     headers: ["Authorization": "Bearer TOKEN"],
+///     body: Team(name: "Napoli", year: 1926)
+/// )
+/// ```
+///
+/// # Errors
+/// Throws `DefaultNetworkError.cannotBuildURL` if the composed URL is invalid.
 public struct Endpoint {
+    /// The path component appended to the base URL.
     public let path: String
+    
+    /// The HTTP method used for the request.
     public let method: HTTPMethod
+    
+    /// Query parameters included in the URL.
     public let query: [URLQueryItem]?
+    
+    /// HTTP headers included in the request.
     public let headers: [String:String]?
+    
+    /// The body payload encoded as JSON, if provided.
     public let body: Encodable?
     
+    /// Creates a new `Endpoint` instance.
+    ///
+    /// - Parameters:
+    ///   - path: The URL path component (e.g., "/teams").
+    ///   - method: The HTTP method to use (default is `.get`).
+    ///   - query: Optional query parameters to append to the URL.
+    ///   - headers: Optional HTTP headers to include in the request.
+    ///   - body: Optional request body conforming to `Encodable`.
     public init(path: String,
                 method: HTTPMethod = .get,
                 query: [URLQueryItem]? = nil,
@@ -26,11 +69,16 @@ public struct Endpoint {
         self.body = body
     }
     
-    public func asURLRequest(baseURL: URL) throws -> URLRequest {
+    /// Constructs a `URLRequest` from the endpoint and a base URL.
+    ///
+    /// - Parameter baseURL: The base URL to which the endpoint path and query are appended.
+    /// - Returns: A configured `URLRequest` with method, headers, and body set.
+    /// - Throws: `DefaultNetworkError.cannotBuildURL` if URL construction fails.
+    internal func asURLRequest(baseURL: URL) throws -> URLRequest {
         var components: URLComponents? = nil
         if #available(iOS 16.0, macOS 13.0, *) {
             components = URLComponents(url: baseURL.appending(path: path),
-                                           resolvingAgainstBaseURL: false)
+                                       resolvingAgainstBaseURL: false)
         } else {
             components = URLComponents(url: baseURL.appendingPathComponent(path),
                                        resolvingAgainstBaseURL: false)
@@ -43,21 +91,24 @@ public struct Endpoint {
         }
         
         guard let scheme = url.scheme, let host = url.host, !scheme.isEmpty, !host.isEmpty else {
-            LogUtilities.log("URL non valido: \(url)")
+            LogUtilities.log("Invalid URL: \(url)")
             throw DefaultNetworkError.cannotBuildURL
         }
         
         var request = URLRequest(url: url)
         LogUtilities.log("Request URL: \(method.rawValue) \(url.absoluteString)")
         request.httpMethod = method.rawValue
+        
         if let body = body {
             request.httpBody = try JSONEncoder().encode(body)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             if let data = request.httpBody {
-                LogUtilities.log("Body: \n \(String(data: data, encoding: .utf8) ?? "Unable to convert body to string")")
+                LogUtilities.log("Body: \n\(String(data: data, encoding: .utf8) ?? "Unable to convert body to string")")
             }
         }
-        headers?.forEach({ request.setValue($0.value, forHTTPHeaderField: $0.key)})
+        
+        headers?.forEach { request.setValue($0.value, forHTTPHeaderField: $0.key) }
+        
         return request
     }
 }
