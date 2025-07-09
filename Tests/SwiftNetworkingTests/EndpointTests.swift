@@ -1,9 +1,27 @@
 import XCTest
 @testable import SwiftNetworking
 
+/// # EndpointTests
+/// Unit tests for the `Endpoint` type used in SwiftNetworking.
+///
+/// These tests validate:
+/// - URL construction with query parameters
+/// - HTTP method configuration
+/// - Request body encoding
+/// - Request headers
+/// - Error handling for malformed base URLs
+///
+/// ## Test Cases
 final class EndpointTests: XCTestCase {
     let baseURL = URL(string: "https://api.example.com")!
     
+    /// ## testGETRequestWithQuery
+    /// Verifies that a GET request is correctly built when query parameters are provided.
+    ///
+    /// The test ensures:
+    /// - The full URL includes the encoded query string.
+    /// - The HTTP method is `GET`.
+    /// - The request body is `nil`.
     func testGETRequestWithQuery() throws {
         let endpoint = Endpoint(
             path: "/teams",
@@ -21,6 +39,14 @@ final class EndpointTests: XCTestCase {
         XCTAssertNil(request.httpBody)
     }
     
+    /// ## testPOSTRequestWithBodyAndHeaders
+    /// Validates that a POST request includes the correct body and headers.
+    ///
+    /// The test ensures:
+    /// - The request URL matches the expected path.
+    /// - The HTTP method is `POST`.
+    /// - The `Content-Type` header is set correctly.
+    /// - The body is properly encoded as JSON and can be decoded back to the original model.
     func testPOSTRequestWithBodyAndHeaders() throws {
         struct Team: Codable, Equatable {
             let name: String
@@ -36,7 +62,7 @@ final class EndpointTests: XCTestCase {
             body: team
         )
         
-        let request = try endpoint.asURLRequest(baseURL: URL(string: "https://api.example.com")!)
+        let request = try endpoint.asURLRequest(baseURL: baseURL)
         let data = try JSONDecoder().decode(Team.self, from: request.httpBody!)
         
         XCTAssertEqual(request.url?.absoluteString, "https://api.example.com/teams")
@@ -45,12 +71,19 @@ final class EndpointTests: XCTestCase {
         XCTAssertEqual(data, team)
     }
     
+    /// ## testDefaultMethodIsGET
+    /// Ensures that the default HTTP method used by `Endpoint` is `GET` when not explicitly specified.
     func testDefaultMethodIsGET() throws {
         let endpoint = Endpoint(path: "/status")
         let request = try endpoint.asURLRequest(baseURL: baseURL)
         XCTAssertEqual(request.httpMethod, "GET")
     }
     
+    /// ## testURLConstructionFailsWithInvalidBaseURL
+    /// Ensures that the request building process fails gracefully when an invalid base URL is provided.
+    ///
+    /// The test checks:
+    /// - The error thrown is of type `DefaultNetworkError.cannotBuildURL`.
     func testURLConstructionFailsWithInvalidBaseURL() {
         let invalidBaseURL = URL(string: "invalid-url")
         let endpoint = Endpoint(path: "/test")
@@ -60,3 +93,4 @@ final class EndpointTests: XCTestCase {
         }
     }
 }
+
