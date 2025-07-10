@@ -1,4 +1,4 @@
-# SwiftNetworkingKit 🚀
+# SwiftNetworking 🚀
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Swift Version](https://img.shields.io/badge/Swift-5.7-blue.svg)](https://swift.org)
@@ -32,10 +32,10 @@ import PackageDescription
 let package = Package(
   name: "YourApp",
   dependencies: [
-    .package(url: "https://github.com/your-username/SwiftNetworkingKit.git", from: "1.0.0")
+    .package(url: "https://github.com/Longo97/SwiftNetworking.git", from: "1.0.0")
   ],
   targets: [
-    .target(name: "YourApp", dependencies: ["SwiftNetworkingKit"])
+    .target(name: "YourApp", dependencies: ["SwiftNetworking"])
   ]
 )
 ```
