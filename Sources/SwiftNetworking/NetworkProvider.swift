@@ -49,6 +49,7 @@ import Foundation
 @available(iOS 13.0.0, *)
 public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkClientProtocol {
     private let configuration: NetworkConfiguration
+    private let responseCache = ResponseCache()
 
     /// Initializes the `NetworkProvider` with a given network configuration.
     ///
@@ -71,6 +72,15 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
     @available(macOS 10.15, *)
     public func send<T>(_ endpoint: Endpoint, as type: T.Type) async throws -> T where T: Decodable {
         let request = try endpoint.asURLRequest(baseURL: configuration.baseURL)
+        
+        /// 1. Cache
+        if case let .enabled(ttl) = endpoint.cachePolicy,
+           let data = responseCache.get(for: request, ttl: ttl) {
+            LogUtilities.log("📦 Using cached response")
+            return try configuration.decoder.decode(T.self, from: data)
+        }
+        
+        /// 2. Network call
         let (data, response): (Data, URLResponse)
 
         if #available(macOS 12.0, *) {
@@ -93,6 +103,13 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
         try HTTPResponseValidator.validate(response)
 
         LogUtilities.log("RESPONSE: \(String(data: data, encoding: .utf8) ?? "Unable to decode data to string")")
+        
+        if case .enabled = endpoint.cachePolicy,
+           let httpResponse = response as? HTTPURLResponse,
+           httpResponse.statusCode == 200 {
+            responseCache.set(data, for: request)
+            LogUtilities.log("💾 Cached response")
+        }
 
         do {
             return try configuration.decoder.decode(T.self, from: data)

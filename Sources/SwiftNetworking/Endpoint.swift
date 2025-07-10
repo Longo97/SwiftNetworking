@@ -19,6 +19,7 @@ import Foundation
 /// - `query`: Optional query parameters as an array of `URLQueryItem`.
 /// - `headers`: Optional HTTP headers as a dictionary `[String: String]`.
 /// - `body`: Optional request body conforming to `Encodable`.
+/// - `cachePolicy`: Policy to enable cache. Default to `.disabled`
 ///
 /// # Usage Example
 /// ```swift
@@ -27,7 +28,8 @@ import Foundation
 ///     method: .post,
 ///     query: [URLQueryItem(name: "season", value: "2024")],
 ///     headers: ["Authorization": "Bearer TOKEN"],
-///     body: Team(name: "Napoli", year: 1926)
+///     body: Team(name: "Napoli", year: 1926),
+///     cachePolicy: .enabled(ttl: 60)
 /// )
 /// ```
 ///
@@ -49,6 +51,9 @@ public struct Endpoint {
     /// The body payload encoded as JSON, if provided.
     public let body: Encodable?
     
+    /// The policy for cache usage, if not set the cache is disabled
+    public var cachePolicy: CachePolicy = .disabled
+    
     /// Creates a new `Endpoint` instance.
     ///
     /// - Parameters:
@@ -61,12 +66,14 @@ public struct Endpoint {
                 method: HTTPMethod = .get,
                 query: [URLQueryItem]? = nil,
                 headers: [String: String]? = nil,
-                body: Encodable? = nil) {
+                body: Encodable? = nil,
+                cachePolicy: CachePolicy = .disabled) {
         self.path = path
         self.method = method
         self.query = query
         self.headers = headers
         self.body = body
+        self.cachePolicy = cachePolicy
     }
     
     /// Constructs a `URLRequest` from the endpoint and a base URL.
