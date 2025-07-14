@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Swift Version](https://img.shields.io/badge/Swift-5.7-blue.svg)](https://swift.org)
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%2013%2B%20-brightgreen.svg)]()
-[![Release 1.0.0](https://img.shields.io/badge/release-1.0.0-blue.svg)]()
+[![Release 1.0.0](https://img.shields.io/badge/release-1.1.0-blue.svg)]()
 
 **A lightweight and testable asynchronous REST client built with Swift and `async/await`.**
 
@@ -43,3 +43,33 @@ let package = Package(
 Or use Xcode:
 File → Add Packages…
  and paste the repo URL: https://github.com/Longo97/SwiftNetworking.git
+
+ ## 🚀 Usage
+ ```swift
+let provider = NetworkProvider()
+let request = NetworkRequest<User>(endpoint: "/users/1")
+
+do {
+    let user = try await provider.execute(request)
+    print(user.name)
+} catch {
+    print(error.localizedDescription)
+}
+```
+
+## 🙌 Contributing
+We welcome contributions to improve SwiftNetworking! 🚀
+
+If you’d like to help, here are a few ideas:
+- Add new request/response features;
+- Improve compatibility with older iOS versions;
+- Write tests or improve documentation.
+
+## 📐 Guidelines
+- Follow the existing code style and structure;
+- Write tests for any new functionality;
+- Open a pull request with a clear description of your changes;
+- Be respectful and constructive in discussions.
+
+## 📄 License
+This project is licensed under the MIT License.
