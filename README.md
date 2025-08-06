@@ -46,11 +46,14 @@ File → Add Packages…
 
  ## 🚀 Usage
  ```swift
-let provider = NetworkProvider()
-let request = NetworkRequest<User>(endpoint: "/users/1")
+guard let url = URL(string: "https://<Your URL>.com") else {
+    return
+}
 
+let configuration = NetworkConfiguration(baseURL:url)
+let provider = NetworkProvider<DefaultNetworkError>(configuration: configuration)
 do {
-    let user = try await provider.execute(request)
+    let user = try await provider.send(Endpoint(path: "/users"), as: User.self) // <User> is the Model
     print(user.name)
 } catch {
     print(error.localizedDescription)
