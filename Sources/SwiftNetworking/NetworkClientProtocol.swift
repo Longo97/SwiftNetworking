@@ -12,4 +12,8 @@ internal protocol NetworkClientProtocol {
     func send<T: Decodable>(
         _ endpoint: Endpoint,
         as type: T.Type) async throws -> T
+    
+    func fetch<T: Decodable>(
+        _ endpoint: Endpoint,
+        result: @escaping (Result<T, Error>) -> (Void)) throws
 }
