@@ -76,7 +76,7 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
         /// 1. Cache
         if case let .enabled(ttl) = endpoint.cachePolicy,
            let data = responseCache.get(for: request, ttl: ttl) {
-            LogUtilities.log("📦 Using cached response")
+            LogUtilities.log("Using cached response")
             return try configuration.decoder.decode(T.self, from: data)
         }
         
@@ -102,13 +102,15 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
 
         try HTTPResponseValidator.validate(response)
 
-        LogUtilities.log("RESPONSE: \(String(data: data, encoding: .utf8) ?? "Unable to decode data to string")")
+        if endpoint.verbose {
+            LogUtilities.log("RESPONSE: \(String(data: data, encoding: .utf8) ?? "Unable to decode data to string")")
+        }
         
         if case .enabled = endpoint.cachePolicy,
            let httpResponse = response as? HTTPURLResponse,
            httpResponse.statusCode == 200 {
             responseCache.set(data, for: request)
-            LogUtilities.log("💾 Cached response")
+            LogUtilities.log("Cached response")
         }
 
         do {

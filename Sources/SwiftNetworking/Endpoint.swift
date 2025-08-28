@@ -20,6 +20,7 @@ import Foundation
 /// - `headers`: Optional HTTP headers as a dictionary `[String: String]`.
 /// - `body`: Optional request body conforming to `Encodable`.
 /// - `cachePolicy`: Policy to enable cache. Default to `.disabled`
+/// - `verbose`: Controls whether request/response logs should be printed. Default to `false`
 ///
 /// # Usage Example
 /// ```swift
@@ -29,7 +30,8 @@ import Foundation
 ///     query: [URLQueryItem(name: "season", value: "2024")],
 ///     headers: ["Authorization": "Bearer TOKEN"],
 ///     body: Team(name: "Napoli", year: 1926),
-///     cachePolicy: .enabled(ttl: 60)
+///     cachePolicy: .enabled(ttl: 60),
+///     verbose: true
 /// )
 /// ```
 ///
@@ -54,6 +56,9 @@ public struct Endpoint {
     /// The policy for cache usage, if not set the cache is disabled
     public var cachePolicy: CachePolicy = .disabled
     
+    /// Controls whether request/response logs should be printed.
+    public var verbose: Bool = false
+    
     /// Creates a new `Endpoint` instance.
     ///
     /// - Parameters:
@@ -67,13 +72,15 @@ public struct Endpoint {
                 query: [URLQueryItem]? = nil,
                 headers: [String: String]? = nil,
                 body: Encodable? = nil,
-                cachePolicy: CachePolicy = .disabled) {
+                cachePolicy: CachePolicy = .disabled,
+                verbose: Bool = false) {
         self.path = path
         self.method = method
         self.query = query
         self.headers = headers
         self.body = body
         self.cachePolicy = cachePolicy
+        self.verbose = verbose
     }
     
     /// Constructs a `URLRequest` from the endpoint and a base URL.
@@ -103,13 +110,15 @@ public struct Endpoint {
         }
         
         var request = URLRequest(url: url)
-        LogUtilities.log("Request URL: \(method.rawValue) \(url.absoluteString)")
+        if verbose {
+            LogUtilities.log("Request URL: \(method.rawValue) \(url.absoluteString)")
+        }
         request.httpMethod = method.rawValue
         
         if let body = body {
             request.httpBody = try JSONEncoder().encode(body)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            if let data = request.httpBody {
+            if let data = request.httpBody, verbose {
                 LogUtilities.log("Body: \n\(String(data: data, encoding: .utf8) ?? "Unable to convert body to string")")
             }
         }
