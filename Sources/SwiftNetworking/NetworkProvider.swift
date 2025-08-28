@@ -106,6 +106,10 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
             LogUtilities.log("RESPONSE: \(String(data: data, encoding: .utf8) ?? "Unable to decode data to string")")
         }
         
+        if endpoint.verbose, let response = response as? HTTPURLResponse {
+            LogUtilities.log("RESPONSE CODE: \(response.statusCode)")
+        }
+        
         if case .enabled = endpoint.cachePolicy,
            let httpResponse = response as? HTTPURLResponse,
            httpResponse.statusCode == 200 {

@@ -12,7 +12,6 @@ internal enum HTTPResponseValidator {
         guard let http = response as? HTTPURLResponse else {
             throw DefaultNetworkError.invalidHTTPResponse
         }
-        LogUtilities.log("RESPONSE CODE: \(http.statusCode)")
         guard (200..<300).contains(http.statusCode) else {
             throw DefaultNetworkError.statusCode(http.statusCode)
         }
