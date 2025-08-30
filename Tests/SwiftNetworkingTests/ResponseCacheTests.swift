@@ -10,43 +10,52 @@ import XCTest
 
 final class ResponseCacheTests: XCTestCase {
     
-    func makeRequest(url: String = "https://example.com") -> URLRequest {
-        return URLRequest(url: URL(string: url)!)
-    }
-    
-    /// Tests that a cached response is correctly returned when accessed within the specified TTL.
-    func testSetAndGetWithinTTL() {
-        let cache = ResponseCache()
-        let request = makeRequest()
-        let data = "Hello, World!".data(using: .utf8)!
+    private var cache: ResponseCache!
+        private var request: URLRequest!
         
-        cache.set(data, for: request)
-        let result = cache.get(for: request, ttl: 5) // 5 seconds
+        override func setUp() {
+            super.setUp()
+            cache = ResponseCache()
+            request = URLRequest(url: URL(string: "https://api.example.com/test")!)
+            request.httpMethod = "GET"
+            request.addValue("Bearer abc", forHTTPHeaderField: "Authorization")
+        }
         
-        XCTAssertEqual(result, data)
-    }
-    
-    /// Tests that the cache returns nil if the cached data has expired based on the TTL.
-    func testGetReturnsNilAfterTTLExpires() {
-        let cache = ResponseCache()
-        let request = makeRequest()
-        let data = "Outdated".data(using: .utf8)!
+        override func tearDown() {
+            cache = nil
+            request = nil
+            super.tearDown()
+        }
         
-        cache.set(data, for: request)
-
-        // Simula che il dato sia vecchio: modifica manualmente il timestamp
-        let cached = cache.get(for: request, ttl: 0) // TTL scaduto subito
+        func test_cacheStoresAndRetrievesDataWithinTTL() {
+            let data = "Hello".data(using: .utf8)!
+            cache.set(data, for: request)
+            
+            let result = cache.get(for: request, ttl: 5) // TTL 5 secondi
+            XCTAssertEqual(result, data, "La cache dovrebbe restituire i dati salvati entro il TTL")
+        }
         
-        XCTAssertNil(cached)
-    }
-    
-    /// Tests that the cache returns nil when no data has been cached for the given request.
-    func testGetReturnsNilIfNoCacheExists() {
-        let cache = ResponseCache()
-        let request = makeRequest()
+        func test_cacheInvalidatesDataAfterTTL() {
+            let data = "Hello".data(using: .utf8)!
+            cache.set(data, for: request)
+            
+            let expectation = XCTestExpectation(description: "Wait for TTL expiration")
+            DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
+                let result = self.cache.get(for: self.request, ttl: 1) // TTL 1 secondo
+                XCTAssertNil(result, "La cache dovrebbe invalidare i dati scaduti")
+                expectation.fulfill()
+            }
+            wait(for: [expectation], timeout: 3)
+        }
         
-        let result = cache.get(for: request, ttl: 5)
-        
-        XCTAssertNil(result)
-    }
+        func test_cacheIgnoresVolatileHeaders() {
+            let data = "Hello".data(using: .utf8)!
+            cache.set(data, for: request)
+            
+            var otherRequest = request!
+            otherRequest.setValue("Bearer xyz", forHTTPHeaderField: "Authorization")
+            
+            let result = cache.get(for: otherRequest, ttl: 5)
+            XCTAssertEqual(result, data, "La cache dovrebbe ignorare header volatili e restituire i dati")
+        }
 }

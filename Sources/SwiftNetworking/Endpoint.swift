@@ -55,7 +55,7 @@ public struct Endpoint {
     
     /// The policy for cache usage, if not set the cache is disabled
     public var cachePolicy: CachePolicy = .disabled
-    
+        
     /// Controls whether request/response logs should be printed.
     public var verbose: Bool = false
     
@@ -67,6 +67,8 @@ public struct Endpoint {
     ///   - query: Optional query parameters to append to the URL.
     ///   - headers: Optional HTTP headers to include in the request.
     ///   - body: Optional request body conforming to `Encodable`.
+    ///   - cachePolicy: Optional cache policy to set cache usage.
+    ///   - verbose: Boolean to set network logs
     public init(path: String,
                 method: HTTPMethod = .get,
                 query: [URLQueryItem]? = nil,

@@ -9,15 +9,15 @@
 import Foundation
 
 internal final class ResponseCache {
-    private let cache = NSCache<NSURLRequest, CachedResponse>()
+    private let cache = NSCache<CacheKey, CachedResponse>()
     
     func get(for request: URLRequest, ttl: TimeInterval) -> Data? {
-        guard let cached = cache.object(forKey: request as NSURLRequest) else { return nil }
+        guard let cached = cache.object(forKey: .init(request: request)) else { return nil }
         let age = abs(cached.timestamp.timeIntervalSinceNow)
         return age < ttl ? cached.data : nil
     }
     
     func set(_ data: Data, for request: URLRequest) {
-        cache.setObject(CachedResponse(data: data), forKey: request as NSURLRequest)
+        cache.setObject(CachedResponse(data: data), forKey: .init(request: request))
     }
 }
