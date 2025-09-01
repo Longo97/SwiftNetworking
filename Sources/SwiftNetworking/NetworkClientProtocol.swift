@@ -15,5 +15,5 @@ internal protocol NetworkClientProtocol {
     
     func fetch<T: Decodable>(
         _ endpoint: Endpoint,
-        result: @escaping (Result<T, Error>) -> (Void)) throws
+        result: @escaping (Result<T, Error>) -> (Void))
 }

@@ -125,33 +125,45 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
     /// - Parameters:
     ///   - endpoint: The `Endpoint` describing the path, method, headers, query, and body.
     ///   - result: A completion block with  `Decodable` type for the response and Error.
-    /// - Throws:
-    ///   - A `URLError` if networking fails.
-    ///   - An error thrown by `HTTPResponseValidator` if status code is invalid.
-    ///   - A mapped decoding error using `ErrorType.fromDecodingError`.
-    ///   - `ErrorType.unknown` for unexpected decoding failures.
-    
-    public func fetch<T: Decodable>(_ endpoint: Endpoint, result: @escaping (Result<T, Error>) -> Void) throws {
+    public func fetch<T: Decodable>(
+        _ endpoint: Endpoint,
+        result: @escaping (Result<T, Error>) -> Void) {
         do {
             let request = try endpoint.asURLRequest(baseURL: configuration.baseURL)
             configuration.session.dataTask(with: request) { data, response, error in
-                if let response = response as? HTTPURLResponse, response.statusCode != 200 {
-                    ErrorType.fromStatusCode(response.statusCode)
-                    result(.failure(ErrorType.fromStatusCode(response.statusCode)))
-                } else {
-                    guard let data = data else {
-                        return
-                    }
-                    do {
-                        let decoded = try JSONDecoder().decode(T.self, from: data)
-                        result(.success(decoded))
-                    } catch {
+                if let error = error {
+                    result(.failure(error))
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    result(.failure(ErrorType.invalidResponse))
+                    return
+                }
+
+                guard (200..<300).contains(httpResponse.statusCode) else {
+                    result(.failure(ErrorType.fromStatusCode(httpResponse.statusCode)))
+                    return
+                }
+
+                guard let data = data else {
+                    result(.failure(ErrorType.unknown))
+                    return
+                }
+
+                do {
+                    let decoded = try JSONDecoder().decode(T.self, from: data)
+                    result(.success(decoded))
+                } catch {
+                    if let decodingError = error as? DecodingError {
+                        result(.failure(ErrorType.fromDecodingError(decodingError)))
+                    } else {
                         result(.failure(error))
                     }
                 }
             }.resume()
         } catch {
-            throw ErrorType.unknown
+            result(.failure(error))
         }
     }
 }
