@@ -58,6 +58,29 @@ do {
 } catch {
     print(error.localizedDescription)
 }
+
+// dataTaskWithCompletionHandler
+guard let url = URL(string: "<Your URL>") else {
+    return
+}
+
+let configuration = NetworkConfiguration(baseURL:url)
+let provider = NetworkProvider<DefaultNetworkError>(configuration: configuration)
+
+let endPoint = Endpoint(path: "users")
+do {
+    try provider.fetch(endPoint) { (result: Result<<Your Model>, Error>) in
+        switch result {
+        case .success(let user):
+            print("User fetched:", user)
+        case .failure(let error):
+            print("Failed to fetch user:", error)
+        }
+    }
+} catch {
+    print("Failed to send request:", error)
+}
+
 ```
 
 ## 🙌 Contributing
