@@ -131,4 +131,50 @@ final class NetworkProviderTests: XCTestCase {
             XCTAssertEqual(error, .statusCode(500))
         }
     }
+    
+    /// ## testFetchReadsLocalJSONAndDecodes
+    /// Tests that the `NetworkProvider` correctly decodes a valid JSON response into a Decodable model.
+    ///
+    /// The test ensures:
+    /// - The mocked JSON is returned and decoded properly.
+    /// - The decoded value matches the expected model.
+    func testFetchReadsLocalJSONAndDecodes() throws {
+            let config = URLSessionConfiguration.ephemeral
+            config.protocolClasses = [MockURLProtocol.self]
+            let session = URLSession(configuration: config)
+            
+            let baseURL = URL(string: "https://api.example.com")!
+            let network = NetworkProvider<DefaultNetworkError>(
+                configuration: .init(baseURL: baseURL, session: session)
+            )
+            
+            let jsonData = """
+            {
+                "id": 1,
+                "name": "Alice"
+            }
+            """.data(using: .utf8)!
+
+            MockURLProtocol.stubResponseData = jsonData
+
+            let exp = expectation(description: "Decoding JSON")
+        
+            struct User: Decodable {
+                let id: Int
+                let name: String
+            }
+
+            network.fetch(Endpoint(path: "/user")) { (result: Result<User, Error>) in
+                switch result {
+                case .success(let user):
+                    XCTAssertEqual(user.id, 1)
+                    XCTAssertEqual(user.name, "Alice")
+                case .failure(let error):
+                    XCTFail("Expected success, got \(error)")
+                }
+                exp.fulfill()
+            }
+
+            wait(for: [exp], timeout: 1.0)
+        }
 }
