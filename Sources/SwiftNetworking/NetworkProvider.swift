@@ -125,4 +125,51 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
             throw ErrorType.unknown
         }
     }
+    
+    /// Sends a request to the provided `Endpoint` and decodes the response into the expected type.
+    ///
+    /// - Parameters:
+    ///   - endpoint: The `Endpoint` describing the path, method, headers, query, and body.
+    ///   - result: A completion block with  `Decodable` type for the response and Error.
+    public func fetch<T: Decodable>(
+        _ endpoint: Endpoint,
+        result: @escaping (Result<T, Error>) -> Void) {
+        do {
+            let request = try endpoint.asURLRequest(baseURL: configuration.baseURL)
+            configuration.session.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    result(.failure(error))
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    result(.failure(ErrorType.invalidResponse))
+                    return
+                }
+
+                guard (200..<300).contains(httpResponse.statusCode) else {
+                    result(.failure(ErrorType.fromStatusCode(httpResponse.statusCode)))
+                    return
+                }
+
+                guard let data = data else {
+                    result(.failure(ErrorType.unknown))
+                    return
+                }
+
+                do {
+                    let decoded = try JSONDecoder().decode(T.self, from: data)
+                    result(.success(decoded))
+                } catch {
+                    if let decodingError = error as? DecodingError {
+                        result(.failure(ErrorType.fromDecodingError(decodingError)))
+                    } else {
+                        result(.failure(error))
+                    }
+                }
+            }.resume()
+        } catch {
+            result(.failure(error))
+        }
+    }
 }
