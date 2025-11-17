@@ -5,6 +5,9 @@
 //  Created by Marco Longobardi on 30/08/25.
 //
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 final class CacheKey: NSObject {
     let method: String

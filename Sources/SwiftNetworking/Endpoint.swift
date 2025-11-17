@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// Represents a REST API endpoint, encapsulating the URL path, HTTP method,
 /// query parameters, headers, and optional body data.

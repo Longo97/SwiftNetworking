@@ -1,5 +1,8 @@
 import XCTest
 @testable import SwiftNetworking
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// # EndpointTests
 /// Unit tests for the `Endpoint` type used in SwiftNetworking.

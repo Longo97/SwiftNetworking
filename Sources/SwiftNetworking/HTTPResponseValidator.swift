@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 internal enum HTTPResponseValidator {
     internal static func validate(_ response: URLResponse) throws {

@@ -38,7 +38,7 @@ extension DefaultNetworkError: Equatable {
         case let (.statusCode(a), .statusCode(b)):
             return a == b
         case (.decoding, .decoding):
-            // Non possiamo confrontare DecodingError, quindi li trattiamo come uguali tra loro
+            // We cannot compare DecodingError, so we treat them as equal
             return true
         default:
             return false

@@ -45,41 +45,131 @@ File → Add Packages…
  and paste the repo URL: https://github.com/Longo97/SwiftNetworking.git
 
  ## 🚀 Usage
+
+### Basic GET Request (async/await)
  ```swift
-guard let url = URL(string: "https://<Your URL>.com") else {
+guard let url = URL(string: "https://api.example.com") else {
     return
 }
 
-let configuration = NetworkConfiguration(baseURL:url)
+let configuration = NetworkConfiguration(baseURL: url)
 let provider = NetworkProvider<DefaultNetworkError>(configuration: configuration)
+
+struct User: Decodable {
+    let id: Int
+    let name: String
+}
+
 do {
-    let user = try await provider.send(Endpoint(path: "/users"), as: User.self) // <User> is the Model
-    print(user.name)
+    let user = try await provider.send(Endpoint(path: "/users/1"), as: User.self)
+    print("User: \(user.name)")
 } catch {
-    print(error.localizedDescription)
+    print("Error: \(error.localizedDescription)")
+}
+```
+
+### POST Request with Body
+```swift
+struct CreateUserRequest: Encodable {
+    let name: String
+    let email: String
 }
 
-// dataTaskWithCompletionHandler
-guard let url = URL(string: "<Your URL>") else {
-    return
-}
+let newUser = CreateUserRequest(name: "John Doe", email: "john@example.com")
+let endpoint = Endpoint(
+    path: "/users",
+    method: .post,
+    headers: ["Authorization": "Bearer YOUR_TOKEN"],
+    body: newUser
+)
 
-let configuration = NetworkConfiguration(baseURL:url)
-let provider = NetworkProvider<DefaultNetworkError>(configuration: configuration)
-
-let endPoint = Endpoint(path: "users")
 do {
-    try provider.fetch(endPoint) { (result: Result<<Your Model>, Error>) in
-        switch result {
-        case .success(let user):
-            print("User fetched:", user)
-        case .failure(let error):
-            print("Failed to fetch user:", error)
-        }
+    let createdUser = try await provider.send(endpoint, as: User.self)
+    print("Created user: \(createdUser.name)")
+} catch {
+    print("Error: \(error.localizedDescription)")
+}
+```
+
+### PUT/PATCH Request
+```swift
+struct UpdateUserRequest: Encodable {
+    let name: String
+}
+
+let update = UpdateUserRequest(name: "Jane Doe")
+let endpoint = Endpoint(
+    path: "/users/1",
+    method: .patch,
+    body: update
+)
+
+do {
+    let updatedUser = try await provider.send(endpoint, as: User.self)
+    print("Updated user: \(updatedUser.name)")
+} catch {
+    print("Error: \(error.localizedDescription)")
+}
+```
+
+### DELETE Request
+```swift
+let endpoint = Endpoint(path: "/users/1", method: .delete)
+
+do {
+    // DELETE requests can return empty responses or status confirmations
+    struct DeleteResponse: Decodable {
+        let success: Bool
     }
+    let response = try await provider.send(endpoint, as: DeleteResponse.self)
+    print("Deleted: \(response.success)")
 } catch {
-    print("Failed to send request:", error)
+    print("Error: \(error.localizedDescription)")
 }
+```
+
+### Completion Handler (dataTask)
+```swift
+let endpoint = Endpoint(path: "/users/1")
+
+provider.fetch(endpoint) { (result: Result<User, Error>) in
+    switch result {
+    case .success(let user):
+        print("User fetched: \(user.name)")
+    case .failure(let error):
+        print("Failed to fetch user: \(error.localizedDescription)")
+    }
+}
+```
+
+### Request with Cache
+```swift
+let endpoint = Endpoint(
+    path: "/users/1",
+    cachePolicy: .enabled(ttl: 300), // Cache for 5 minutes
+    verbose: true // Enable debug logging
+)
+
+do {
+    let user = try await provider.send(endpoint, as: User.self)
+    print("User: \(user.name)")
+} catch {
+    print("Error: \(error.localizedDescription)")
+}
+```
+
+### Custom Decoder Configuration
+```swift
+let decoder = JSONDecoder()
+decoder.keyDecodingStrategy = .convertFromSnakeCase
+decoder.dateDecodingStrategy = .iso8601
+
+let configuration = NetworkConfiguration(
+    baseURL: url,
+    decoder: decoder
+)
+let provider = NetworkProvider<DefaultNetworkError>(configuration: configuration)
+```
 
 ```
 
