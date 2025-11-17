@@ -7,6 +7,9 @@
 
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 internal final class ResponseCache {
     private let cache = NSCache<CacheKey, CachedResponse>()

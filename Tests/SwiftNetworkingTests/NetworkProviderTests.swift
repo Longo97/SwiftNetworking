@@ -7,6 +7,9 @@
 
 import XCTest
 @testable import SwiftNetworking
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// # NetworkProviderTests
 /// Unit tests for `NetworkProvider`, which handles sending network requests and decoding responses.

@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 @available(iOS 13.0.0,macOS 10.15, *)
 internal protocol NetworkClientProtocol {

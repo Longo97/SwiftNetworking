@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// # NetworkProvider
 /// A generic, asynchronous network client that sends requests using `URLSession` and decodes responses into strongly-typed models.
@@ -136,7 +139,26 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
         result: @escaping (Result<T, Error>) -> Void) {
         do {
             let request = try endpoint.asURLRequest(baseURL: configuration.baseURL)
-            configuration.session.dataTask(with: request) { data, response, error in
+            
+            /// 1. Cache
+            if case let .enabled(ttl) = endpoint.cachePolicy,
+               let data = responseCache.get(for: request, ttl: ttl) {
+                LogUtilities.log("Using cached response")
+                do {
+                    let decoded = try configuration.decoder.decode(T.self, from: data)
+                    result(.success(decoded))
+                } catch let decodingError as DecodingError {
+                    result(.failure(ErrorType.fromDecodingError(decodingError)))
+                } catch {
+                    result(.failure(ErrorType.unknown))
+                }
+                return
+            }
+            
+            /// 2. Network call
+            configuration.session.dataTask(with: request) { [weak self] data, response, error in
+                guard let self = self else { return }
+                
                 if let error = error {
                     result(.failure(error))
                     return
@@ -156,9 +178,20 @@ public final class NetworkProvider<ErrorType: NetworkErrorConvertible>: NetworkC
                     result(.failure(ErrorType.unknown))
                     return
                 }
+                
+                if endpoint.verbose {
+                    LogUtilities.log("RESPONSE: \(String(data: data, encoding: .utf8) ?? "Unable to decode data to string")")
+                    LogUtilities.log("RESPONSE CODE: \(httpResponse.statusCode)")
+                }
+                
+                if case .enabled = endpoint.cachePolicy,
+                   httpResponse.statusCode == 200 {
+                    self.responseCache.set(data, for: request)
+                    LogUtilities.log("Cached response")
+                }
 
                 do {
-                    let decoded = try JSONDecoder().decode(T.self, from: data)
+                    let decoded = try self.configuration.decoder.decode(T.self, from: data)
                     result(.success(decoded))
                 } catch {
                     if let decodingError = error as? DecodingError {

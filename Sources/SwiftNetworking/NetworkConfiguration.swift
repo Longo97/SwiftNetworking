@@ -5,6 +5,9 @@
 //  Created by Marco Longobardi on 08/07/25.
 //
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// Configuration container for network requests.
 ///
