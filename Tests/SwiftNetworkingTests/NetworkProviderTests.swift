@@ -285,4 +285,96 @@ final class NetworkProviderTests: XCTestCase {
         
         wait(for: [exp], timeout: 1.0)
     }
+    
+    /// ## testFetchHandlesDecodingError
+    /// Tests that the `fetch` method properly handles and maps decoding errors.
+    func testFetchHandlesDecodingError() throws {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: config)
+        
+        let baseURL = URL(string: "https://api.example.com")!
+        let network = NetworkProvider<DefaultNetworkError>(
+            configuration: .init(baseURL: baseURL, session: session)
+        )
+        
+        // Invalid JSON that doesn't match the model
+        let jsonData = """
+        {
+            "unexpected": "data"
+        }
+        """.data(using: .utf8)!
+        
+        MockURLProtocol.stubResponseData = jsonData
+        
+        struct User: Decodable {
+            let id: Int
+            let name: String
+        }
+        
+        let exp = expectation(description: "Handle decoding error")
+        
+        network.fetch(Endpoint(path: "/user")) { (result: Result<User, Error>) in
+            switch result {
+            case .success:
+                XCTFail("Expected decoding error, got success")
+            case .failure(let error):
+                if let networkError = error as? DefaultNetworkError {
+                    // Check that it's a decoding error
+                    if case .decoding = networkError {
+                        // Success - decoding error was properly mapped
+                    } else {
+                        XCTFail("Expected decoding error, got \(networkError)")
+                    }
+                } else {
+                    XCTFail("Expected DefaultNetworkError, got \(error)")
+                }
+            }
+            exp.fulfill()
+        }
+        
+        wait(for: [exp], timeout: 1.0)
+    }
+    
+    /// ## testSendHandlesDecodingError
+    /// Tests that the `send` method properly handles and maps decoding errors.
+    func testSendHandlesDecodingError() async throws {
+        let jsonData = """
+        {
+            "unexpected": "data"
+        }
+        """.data(using: .utf8)!
+        
+        MockURLProtocol.stubResponseData = jsonData
+        
+        defer {
+            MockURLProtocol.stubResponseData = nil
+            MockURLProtocol.error = nil
+            MockURLProtocol.responseStatusCode = 200
+        }
+        
+        let sessionConfig = URLSessionConfiguration.ephemeral
+        sessionConfig.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: sessionConfig)
+        
+        let config = NetworkConfiguration(baseURL: URL(string: "http://example.com")!, session: session)
+        let provider = NetworkProvider<DefaultNetworkError>(configuration: config)
+        
+        struct User: Decodable {
+            let id: Int
+            let name: String
+        }
+        
+        do {
+            _ = try await provider.send(.init(path: "/test", method: .get), as: User.self)
+            XCTFail("Expected decoding error")
+        } catch let error as DefaultNetworkError {
+            // Check that it's a decoding error
+            if case .decoding = error {
+                // Success - decoding error was properly mapped
+            } else {
+                XCTFail("Expected decoding error, got \(error)")
+            }
+        }
+    }
 }

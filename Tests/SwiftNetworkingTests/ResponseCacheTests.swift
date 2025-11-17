@@ -38,6 +38,33 @@ final class ResponseCacheTests: XCTestCase {
             XCTAssertEqual(result, data, "Cache should return the saved data within TTL")
         }
         
+        func test_cacheReturnsNilForNonExistentRequest() {
+            var differentRequest = request!
+            differentRequest.url = URL(string: "https://api.example.com/different")
+            
+            let result = cache.get(for: differentRequest, ttl: 5)
+            XCTAssertNil(result, "Cache should return nil for requests that haven't been cached")
+        }
+        
+        func test_cacheHandlesEmptyData() {
+            let emptyData = Data()
+            cache.set(emptyData, for: request)
+            
+            let result = cache.get(for: request, ttl: 5)
+            XCTAssertEqual(result, emptyData, "Cache should handle empty data")
+        }
+        
+        func test_cacheOverwritesExistingData() {
+            let data1 = "First".data(using: .utf8)!
+            cache.set(data1, for: request)
+            
+            let data2 = "Second".data(using: .utf8)!
+            cache.set(data2, for: request)
+            
+            let result = cache.get(for: request, ttl: 5)
+            XCTAssertEqual(result, data2, "Cache should overwrite existing data")
+        }
+        
         func test_cacheInvalidatesDataAfterTTL() {
             let data = "Hello".data(using: .utf8)!
             cache.set(data, for: request)
